@@ -13,12 +13,13 @@
 	if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 		// Eliminar espacios y validar campos
-		$username   = trim($data['nombre'] ?? '');
+		$nombre			= trim($data['nombre'] ?? '');
+		$username   = trim($data['username'] ?? '');
 		$email      = trim($data['email'] ?? '');
 		$contrasena = trim($data['contrasenia'] ?? '');
 
 		// Validar campos
-		if (empty($username) || empty($email) || empty($contrasena)) {
+		if (empty($nombre) || empty($username) || empty($email) || empty($contrasena)) {
 			sendResponse(0, 'Todos los campos son requeridos');
 		}
 
@@ -29,20 +30,28 @@
 
 		try {
 			// Validar si el usuario ya existe
-			$sqlCheck = "SELECT COUNT(*) FROM esquema1.usuarios WHERE nombre = :username OR email = :email";
+			$sqlCheck = " SELECT COUNT(*) 
+										FROM esquema1.usuarios 
+										WHERE username = :username
+											 OR nombre   = :nombre 
+											 OR email    = :email";
 			$stmtCheck = $pdo->prepare($sqlCheck);
-			$stmtCheck->execute(['username' => $username, 'email' => $email]);
+			$stmtCheck->execute(['username' => $username ,
+													 'nombre'   => $nombre, 
+													 'email'    => $email ]);
 
 			if ($stmtCheck->fetchColumn() > 0) {
 				sendResponse(0, 'El usuario o el email ya están registrados');
 			}
 
 			// Registrar un nuevo usuario
-			$sqlInsert = "INSERT INTO esquema1.usuarios (nombre, email, password) VALUES (:username, :email, :contrasena)";
+			$sqlInsert = "INSERT INTO esquema1.usuarios (nombre, email, password, username) 
+										VALUES (:nombre, :email, :contrasena, :username)";
 			$stmtInsert = $pdo->prepare($sqlInsert);
 			$success = $stmtInsert->execute([
-				'username' => $username,
-				'email' => $email,
+				'nombre'	   => $nombre,
+				'username'   => $username,
+				'email'      => $email,
 				'contrasena' => password_hash($contrasena, PASSWORD_BCRYPT),
 			]);
 
@@ -53,14 +62,14 @@
 				//Creamos el JWT
 				$payload = [
 					'user_id' => $userId,
-					'nombre'  => $username,
+					'nombre'  => $nombre,
 					'iat'     => time(),
 					'exp'			=> time() + 28800 //8 horas
 				];
 
 				$jwt = JWT::encode($payload,$secretKey,'HS256');
 
-				sendResponse(1, 'Usuario registrado con éxito', ['token' => $jwt]);
+				sendResponse(1, 'Usuario registrado con exito', ['token' => $jwt]);
 			} else {
 				sendResponse(0, 'Error al registrar el usuario');
 			}
