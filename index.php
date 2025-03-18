@@ -11,9 +11,12 @@
     7 => '123abc',
   ];
 
-foreach ($passwords as $id => $password) {
-    echo "UPDATE esquema1.usuarios SET password = '" . password_hash($password, PASSWORD_BCRYPT) . "' WHERE id = $id;\n";
-}
+  try {
+    $pdo = new PDO("pgsql:host=127.0.0.1;port=5432;dbname=Proyecto1", "postgres", "postgres");
+    echo "Conexión exitosa.";
+  } catch (PDOException $e) {
+    die("Error de conexión: " . $e->getMessage());
+  }
 
 
 ?>
